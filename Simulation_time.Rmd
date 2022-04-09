@@ -7,12 +7,19 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
 ```{r}
 # Passenger Identity
 
-tibble(walking_speed = sample(x= c(265.76, 273.68, 228.8), size = 195, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+set.seed(1)
+
+window_seat1 = c("A","F")
+middle_seat1 = c("B","E")
+aisle_seat1 = c("C","D")
+
+passenger_identity1 <- tibble(walking_speed = sample(x= c(130, 138, 126), size = 195, prob = c(0.35, 0.40, 0.25), replace = TRUE),
        priority = sample(x = c(0,1), size = 195, prob = c(0.95,0.5), replace = TRUE),
        trouble_some = sample(x = c(0,1,2,3,4), size = 195, prob = c(0.55, 0.75, 0.45, 0.35, 0.10), replace = TRUE))%>%
   mutate(queue_check = if_else(priority == 1,
@@ -27,16 +34,121 @@ tibble(walking_speed = sample(x= c(265.76, 273.68, 228.8), size = 195, prob = c(
                                                sample(x= c(1,0),size = 195, replace = TRUE, prob = c(0.3, 0.7)),
                                                if_else(trouble_some == 3,
                                                        sample(x= c(1,0),size = 195, replace = TRUE, prob =c(0.5,0.5)),
-                                                       if_else(trouble_some == 4, 
-                                                               sample(x= c(1,0),size = 195, replace = TRUE, prob = c(0.7, 0.3)),
-                                                               sample(x= c(1,0),size = 195, replace = TRUE, prob = c(0.9, 0.1))))))), 
+                                                       sample(x= c(1,0),size = 195, replace = TRUE, prob = c(0.7, 0.3))
+                                                               )))), 
                                0))%>% 
   mutate(luggage_num = sample(x = c(0,1,2,3), size = 195, replace = TRUE, prob = c(0.1, 0.55, 0.20, 0.15)))%>%
-  summarise(walking_speed, priority, trouble_some, queue_wrong,luggage_num)
+  mutate(seat_assign_letter = sample(x = c(rep("A",33),rep("B",33),rep("C",33),rep("D",32),rep("E",32),rep("F",32)), replace = FALSE))%>%
+  arrange(seat_assign_letter)%>%
+  mutate(seat_row_number = c(1:33,1:33,1:33,1:32,1:32,1:32))%>%
+  mutate(seat_spot = if_else(seat_assign_letter == "A"|seat_assign_letter == "F", 3, 
+                             if_else(seat_assign_letter == "B"|seat_assign_letter == "E",2,
+                                     1)))%>%
+  summarise(walking_speed, priority, trouble_some, queue_wrong,luggage_num, seat_assign_letter,seat_row_number, seat_spot)
   
   
 
 
 
+```
+
+
+
+
+```{r}
+# simulation1
+set.seed(1)
+
+passenger_1 <- passenger_identity1%>%
+  mutate(walking_distance = seat_row_number*3)%>%
+  mutate(walking_time_min = walking_distance/walking_speed)%>%
+  mutate(order =sample(x=1:195,replace = FALSE))%>%
+  mutate(time_before_enter = order*0.08+2)%>%
+  arrange(order)%>%
+  mutate(sit_duration =2*trouble_some+10+2*seat_spot)%>%
+  filter(order == 1)
+
+passenger_2 <- passenger_identity1%>%
+  mutate(walking_distance = seat_row_number*3)%>%
+  mutate(walking_time_min = walking_distance/walking_speed)%>%
+  mutate(order =sample(x=1:195,replace = FALSE))%>%
+  mutate(time_before_enter = order*0.08+2)%>%
+  arrange(order)%>%
+  mutate(sit_duration =2*trouble_some+10+2*seat_spot)%>%
+  filter(order == 2)
+
+
+  
+  
+
+
+a <- function(x){ 
+  ifelse(( x < passenger_n$walking_time_min),passenger1$walking_speed*x,
+         ifelse((passenger1$walking_time_min<x & x<passenger1$seat_spot),passenger1$seat_row_number*3, 
+                NA)) 
+} 
+
+b <- function(x){ 
+  ifelse(( x < passenger2$walking_time_min),passenger2$walking_speed*x-4,
+         ifelse((passenger2$walking_time_min<=x & x<(passenger2$sit_duration+passenger2$walking_time_min)),passenger2$walking_distance-4, 
+                NA)) 
+}
+
+
+
+plot(a,xlim=c(0,1), ylim = c(0, 80), col = "red") 
+par(new=TRUE)
+plot(b,xlim=c(0,1), ylim = c(0, 80), col = "red") 
+abline(v = 0, h = 0)
+
+```
+
+
+```{r}
+
+set.seed(1)
+for (n in 1:5) {
+  m <- passenger_identity1%>%
+  mutate(walking_distance = seat_row_number*3)%>%
+  mutate(walking_time_min = walking_distance/walking_speed)%>%
+  mutate(order =sample(x=1:195,replace = FALSE))%>%
+  mutate(time_before_enter = order*0.08+2)%>%
+  arrange(order)%>%
+  mutate(sit_duration =2*trouble_some+10+2*seat_spot)%>%
+  filter(order == n)
+  
+  a <- function(x){ 
+  ifelse(( x < m$walking_time_min),m$walking_speed*x-4*n,
+         ifelse((m$walking_time_min<x & x<m$sit_duration+m$walking_time_min),m$seat_row_number*3-4*n, 
+                NA)) 
+  } 
+  plot(a,xlim=c(0,4), ylim = c(0, 90), col = "red") 
+  par(new=TRUE)
+
+}
+```
+
+
+```{r}
+set.seed(1)
+for (n in 1:5) {
+  m <- passenger_identity1%>%
+  mutate(walking_distance = seat_row_number*3)%>%
+  mutate(walking_time_min = walking_distance/walking_speed)%>%
+  mutate(order =sample(x=1:195,replace = FALSE))%>%
+  mutate(time_before_enter = order*0.08+2)%>%
+  arrange(order)%>%
+  mutate(sit_duration =2*trouble_some+10+2*seat_spot)%>%
+  filter(order == n)
+  
+  a <- function(x){ 
+  ifelse(( x < m$walking_time_min),m$walking_speed*x-4*n,
+         ifelse((m$walking_time_min<x & x<m$sit_duration+m$walking_time_min),m$seat_row_number*3-4*n, 
+                NA)) 
+  } 
+  plot(a,xlim=c(0,4), ylim = c(0, 90), col = "red") 
+  par(new=TRUE)
+
+}
 ```
 
