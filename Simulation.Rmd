@@ -9,22 +9,46 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+library(tidyverse)
+library(GA)
+library(animation)
 ```
 
-## Including Plots
+```{r}
+set.seed(1)
+plane1_sim <- tibble(sim = 1:5000, capacity = 195, passenger = sample(x = 100:195, size = 5000, replace = TRUE), perc_disable = sample(x = 1:10, size = 5000, replace = TRUE),passenger_disable = ceiling(passenger*perc_disable/100), group_number = sample(x = 1:5, size = 5000, replace = TRUE), group_size = sample(x = 1:5, size =5000, replace = TRUE), group_tot = group_number* group_size, group_perc = group_tot/passenger)
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+plane1_constant_result <- plane1_sim %>%
+  mutate(plane1_const = passenger * passenger_disable * 1/group_perc * 1/group_number)%>%
+  group_by(sim)%>%
+  summarise(sim,plane1_const)
+  
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+plane1_sim%>%
+  summarise(capacity, passenger, passenger_disable, group_number, group_size, group_tot)
+  
+```
+
+
+```{r}
+sd(plane1_constant_result$plane1_const)
+
+plane1_constant_graph <- plane1_constant_result%>%
+  arrange(desc(plane1_const))%>%
+  mutate(ranking = 1:5000)
+
+plane1_constant_graph%>%
+  ggplot(aes(x = plane1_const))+
+  geom_density(aes(y = after_stat(count)))+
+  coord_cartesian(xlim = c(0, 100000))
+
+mean(
+  quantile(plane1_constant_result$plane1_const, probs = c(0.05, 0.95))
+  )
+
+
+```
+
