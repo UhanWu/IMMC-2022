@@ -18,9 +18,14 @@ Walking_time_tot <- tibble(row_seat = 1:33, walking_speed = sample(x= c(2.17, 2.
   pull(walking_time_fin)
   
 
-Tsd_tot <- tibble(TS = sample(c(0:4),size = 192, replace = TRUE), SS = sample(c(rep(1,64),rep(2,64),rep(3,64)),size =192,replace = TRUE), Tsd = 2*(TS+SS)+10)%>%
+Tsd_tot <- tibble(TS = sample(c(0:4), prob = c(0.55, 0.75, 0.45, 0.35, 0.10),size = 192, replace = TRUE), SS = sample(c(rep(1,64),rep(2,64),rep(3,64)),size =192,replace = TRUE), Tsd = 2*(TS+SS)+10)%>%
   summarise(Tsd)%>%
   pull(Tsd)
+
+
+T_shuffle_tot <- tibble(row3seats = 1:64,T_shuffle = sample(c(0,4,10,4,12,8),size = 64, prob = c(16.67,16.67,16.67,16.67,16.67,16.67),replace = TRUE))%>%
+  summarise(T_shufflefin = sum(T_shuffle))%>%
+  pull(T_shufflefin)
 
 B <- tibble(RS = sample(rep(c(1:32),6)), order = sample(1:192, size = 192), RS_O = RS+order, Bp = ceiling(1/RS_O - 1/113))%>%
   summarise(B = sum(Bp))%>%
@@ -35,7 +40,7 @@ random_simulation <- replicate(
   10000,
   {
     expand.grid(time_tot = sample(x = Tsd_tot, size = B, replace = TRUE))%>%
-  summarise(time_tot = Walking_time_tot + sum(time_tot))%>%
+  summarise(time_tot = Walking_time_tot + sum(time_tot) +T_shuffle_tot)%>%
   pull(time_tot)
   }
 )
@@ -62,5 +67,28 @@ quantile(random_simulation, c(0.05,0.50, 0.95))
 
 ```{r}
 
+seats_simulation <- replicate(
+  10000,
+  {
+    expand.grid(time_tot = sample(x = Tsd_tot, size = B, replace = TRUE))%>%
+  summarise(time_tot = Walking_time_tot + sum(time_tot))%>%
+  pull(time_tot)
+  }
+)
+
+as.data.frame(seats_simulation)%>%
+  ggplot(aes(x=seats_simulation))+
+  geom_histogram(aes(y=after_stat(count)), binwidth = 1, 
+                   color = "black")+
+  labs(title = "Empirical Probability Distribution For Boarding Based on Seats",
+         x = "Total Time(Seconds)",
+         y = "Frequency")  +
+    theme_classic()
+
+```
+
+```{r}
+mean(quantile(seats_simulation, c(0.05, 0.95)))
+quantile(seats_simulation, c(0.05,0.50, 0.95))
 ```
 

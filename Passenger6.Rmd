@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+libarary(xlsx)
 
 ```
 
@@ -47,6 +48,9 @@ passenger_identity6
 
 ```
 
+```{r}
+tibble(passenger = 1:192, seat_spot = sample(c(rep(1,64),rep(2,64),rep(3,64)), size = 192))
+```
 
 
 
