@@ -1,0 +1,63 @@
+---
+title: "General Simulation"
+author: "Yuhan Wu"
+date: "4/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+set.seed(1)
+
+Walking_time_tot <- tibble(walking_speed = rep(2,33), walk_time1 = 1/walking_speed, walk_time_fin = 3*sum(walk_time1))%>%
+  summarise(walking_time_fin = sample(walk_time_fin, size =1))%>%
+  pull(walking_time_fin)
+  
+
+Tsd_tot <- tibble(TS = sample(c(0:4),size = 195, replace = TRUE), SS = sample(c(1:3),size =195,replace = TRUE), Tsd = 2*(TS+SS)+10)%>%
+  summarise(Tsd)%>%
+  pull(Tsd)
+
+B <- tibble(RS = sample(1:195, size = 195), order = sample(1:195, size = 195), RS_O = RS+order, Bp = ceiling(1/RS_O - 1/207))%>%
+  summarise(B = sum(Bp))%>%
+  pull(B)
+
+time_TOT <- expand.grid(time_tot = sample(x = Tsd_tot, size = B, replace = TRUE))%>%
+  summarise(time_tot = Walking_time_tot + sum(time_tot))%>%
+  pull(time_tot)
+
+
+random_simulation <- replicate(
+  10000,
+  {
+    expand.grid(time_tot = sample(x = Tsd_tot, size = B, replace = TRUE))%>%
+  summarise(time_tot = Walking_time_tot + sum(time_tot))%>%
+  pull(time_tot)
+  }
+)
+
+as.data.frame(random_simulation)%>%
+  ggplot(aes(x=random_simulation))+
+  geom_histogram(aes(y=after_stat(count/sum(count))), binwidth = 1, 
+                   color = "black")+
+  labs(title = "Empirical Probability Distribution For Random Passenger Placement",
+         subtitle = "Data of 10000 random trials trace the shape of normal distribution",
+         x = "Total Time",
+         y = "Probability") +
+    scale_y_continuous(labels = 
+                         scales::percent_format(accuracy = 1)) +
+    theme_classic()
+
+```
+
+```{r}
+#quantile
+
+mean(quantile(random_simulation, c(0.5, 0.95)))
+
+```
+

@@ -1,0 +1,426 @@
+---
+title: "Normal Distribution"
+author: "Yuhan Wu"
+date: "4/8/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+```
+
+```{r}
+#20 Passenger Identity
+
+passenger_identity6 <- tibble(walking_speed = sample(x= c(130, 138, 126), size = 6, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+       priority = sample(x = c(0,1), size = 6, prob = c(0.95,0.5), replace = TRUE),
+       trouble_some = sample(x = c(0,1,2,3,4), size = 6, prob = c(0.55, 0.75, 0.45, 0.35, 0.10), replace = TRUE))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = ifelse(queue_check == 1,
+                                ifelse(trouble_some == 0,
+                                        sample(x= c(1,0),size = 6, replace = TRUE, prob = c(0, 1)),
+                                   ifelse(trouble_some == 1, 
+                                       sample(x= c(1,0),size = 6, replace = TRUE, prob = c(0.1, 0.9)),
+                                        ifelse(trouble_some == 2,
+                                               sample(x= c(1,0),size = 6, replace = TRUE, prob = c(0.3, 0.7)),
+                                               ifelse(trouble_some == 3,
+                                                       sample(x= c(1,0),size = 6, replace = TRUE, prob =c(0.5,0.5)),
+                                                       sample(x= c(1,0),size = 6, replace = TRUE, prob = c(0.7, 0.3))
+                                                               )))), 
+                               0))%>% 
+  mutate(luggage_num = sample(x = c(0,1,2,3), size = 6, replace = TRUE, prob = c(0.1, 0.55, 0.20, 0.15)))%>%
+  mutate(seat_assign_letter = sample(x = c(rep("A",1),rep("B",1),rep("C",1),rep("D",1),rep("E",1),rep("F",1)), replace = FALSE))%>%
+  arrange(seat_assign_letter)%>%
+  mutate(seat_row_number = c(1,1,1,1,1,1))%>%
+  mutate(seat_spot = ifelse(seat_assign_letter == "A"|seat_assign_letter == "F", 3, 
+                             ifelse(seat_assign_letter == "B"|seat_assign_letter == "E",2,
+                                     1)))%>%
+  mutate(order = sample(x= 1:6, size =6))%>%
+  summarise(walking_speed, priority, trouble_some, queue_wrong,luggage_num, seat_assign_letter,seat_row_number, seat_spot,order)
+
+passenger_identity6
+
+
+```
+
+
+
+
+
+```{r}
+# Passenger Identity
+
+set.seed(1)
+
+
+passenger_identity1 <- tibble(walking_speed = sample(x= c(130, 130, 130), size = 195, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+       priority = sample(x = c(0,1), size = 195, prob = c(0.95,0.5), replace = TRUE),
+       trouble_some = sample(x = c(0,1,2,3,4), size = 195, prob = c(0.55, 0.75, 0.45, 0.35, 0.10), replace = TRUE))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = ifelse(queue_check == 1,
+                                ifelse(trouble_some == 0,
+                                        sample(x= c(1,0),size = 195, replace = TRUE, prob = c(0, 1)),
+                                   ifelse(trouble_some == 1, 
+                                       sample(x= c(1,0),size = 195, replace = TRUE, prob = c(0.1, 0.9)),
+                                        ifelse(trouble_some == 2,
+                                               sample(x= c(1,0),size = 195, replace = TRUE, prob = c(0.3, 0.7)),
+                                               ifelse(trouble_some == 3,
+                                                       sample(x= c(1,0),size = 195, replace = TRUE, prob =c(0.5,0.5)),
+                                                       sample(x= c(1,0),size = 195, replace = TRUE, prob = c(0.7, 0.3))
+                                                               )))), 
+                               0))%>% 
+  mutate(luggage_num = sample(x = c(0,1,2,3), size = 195, replace = TRUE, prob = c(0.1, 0.55, 0.20, 0.15)))%>%
+  mutate(seat_assign_letter = sample(x = c(rep("A",33),rep("B",33),rep("C",33),rep("D",32),rep("E",32),rep("F",32)), replace = FALSE))%>%
+  arrange(seat_assign_letter)%>%
+  mutate(seat_row_number = c(1:33,1:33,1:33,1:32,1:32,1:32))%>%
+  mutate(seat_spot = ifelse(seat_assign_letter == "A"|seat_assign_letter == "F", 3, 
+                             ifelse(seat_assign_letter == "B"|seat_assign_letter == "E",2,
+                                     1)))%>%
+  summarise(walking_speed, priority, trouble_some, queue_wrong,luggage_num, seat_assign_letter,seat_row_number, seat_spot)
+  
+  
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+```{r}
+# simulation1
+# set.seed(1)
+# 
+# passenger_1 <- passenger_identity1%>%
+#   mutate(walking_distance = seat_row_number*3)%>%
+#   mutate(walking_time_min = walking_distance/walking_speed)%>%
+#   mutate(order =sample(x=1:195,replace = FALSE))%>%
+#   mutate(time_before_enter = order*0.08+2)%>%
+#   arrange(order)%>%
+#   mutate(sit_duration =2*trouble_some+10+2*seat_spot)%>%
+#   filter(order == 1)
+# 
+# passenger_2 <- passenger_identity1%>%
+#   mutate(walking_distance = seat_row_number*3)%>%
+#   mutate(walking_time_min = walking_distance/walking_speed)%>%
+#   mutate(order =sample(x=1:195,replace = FALSE))%>%
+#   mutate(time_before_enter = order*0.08+2)%>%
+#   arrange(order)%>%
+#   mutate(sit_duration =2*trouble_some+10+2*seat_spot)%>%
+#   filter(order == 2)
+# 
+# 
+# passenger_3 <- passenger_identity1%>%
+#   mutate(walking_distance = seat_row_number*3)%>%
+#   mutate(walking_time_min = walking_distance/walking_speed)%>%
+#   mutate(order =sample(x=1:195,replace = FALSE))%>%
+#   mutate(time_before_enter = order*0.08+2)%>%
+#   arrange(order)%>%
+#   mutate(sit_duration =2*trouble_some+10+2*seat_spot)%>%
+#   filter(order == 3)
+# 
+# 
+#   
+#   
+# 
+# 
+# a <- function(x){ 
+#   ifelse(( x < passenger_1$walking_time_min),passenger_1$walking_speed*x,
+#          ifelse((passenger_1$walking_time_min<x & x<passenger_1$seat_spot),passenger_1$seat_row_number*3, 
+#                 NA)) 
+# } 
+# 
+# b <- function(x){  
+#   ifelse((passenger_2$walking_speed*x+4 > passenger_1$walking_speed*x), 
+# 
+#                           ifelse((4/(passenger_2$walking_speed-passenger_1$walking_speed)<x & x<passenger_1$walking_time_min),passenger_1$walking_speed*x-4, #2
+#                                                                                                          
+#                           ifelse((passenger_1$walking_time_min<x & x<(passenger_1$sit_duration+passenger_1$walking_time_min)),passenger_1$walking_distance-4, #3
+#                 
+#                 ifelse(((passenger_1$sit_duration+passenger_1$walking_time_min)<x & x<(passenger_1$walking_time_min+passenger_1$sit_duration+(passenger_2$walking_distance-passenger_1$walking_distance)/passenger_2$walking_speed)),(passenger_2$walking_speed*x-4*(passenger_2$walking_speed)*passenger_1$sit_duration/4-4*n),
+#                        ifelse(x>(passenger1$walking_time_min+passenger_1$sit_duration+(passenger_2$walking_distance-passenger_1$walking_distance)/passenger_2$walking_speed),passenger_2$walking_distance,NaN)))),
+#     
+#     ifelse(( x < passenger_2$walking_time_min),passenger_2$walking_speed*x-4*n,
+#          ifelse((passenger_2$walking_time_min<x & x<passenger_2$sit_duration+passenger_2$walking_time_min),passenger_2$walking_distance-4*n,NaN))) }
+# 
+# 
+# c <- function(x){  
+#   ifelse((passenger_3$walking_speed*x+4 > passenger_2$walking_speed*x), 
+# 
+#                           ifelse((4/(passenger_3$walking_speed-passenger_2$walking_speed)<x & x<passenger_2$walking_time_min),passenger_2$walking_speed*x-4, #2
+#                                                                                                          
+#                           ifelse((passenger_1$walking_time_min<x & x<(passenger_2$sit_duration+passenger_2$walking_time_min)),passenger_2$walking_distance-4, #3
+#                 
+#                 ifelse(((passenger_2$sit_duration+passenger_2$walking_time_min)<x & x<(passenger_2$walking_time_min+passenger_2$sit_duration+(passenger_3$walking_distance-passenger_2$walking_distance)/passenger_3$walking_speed)),(passenger_3$walking_speed*x-4*(passenger_3$walking_speed)*passenger_2$sit_duration/4-4*n),
+#                        ifelse(x>(passenger1$walking_time_min+passenger_1$sit_duration+(passenger_3$walking_distance-passenger_2$walking_distance)/passenger_3$walking_speed),passenger_3$walking_distance,NaN)))),
+#     
+#     ifelse(( x < passenger_3$walking_time_min),passenger_3$walking_speed*x-4*n,
+#          ifelse((passenger_3$walking_time_min<x & x<passenger_3$sit_duration+passenger_3$walking_time_min),passenger_3$walking_distance-4*n,NaN))) }
+# 
+# 
+# 
+# 
+# plot(a, col = "red") 
+# plot(b, col = "red") 
+# plot(c,  col = "red") 
+# 
+# par(new=TRUE)
+# 
+# abline(v = 0, h = 0)
+
+```
+
+
+```{r}
+#Simulation_Trial1_Error!
+
+
+# set.seed(1)
+# for (n in 2:4) {
+#   m <- passenger_identity1%>%
+#   mutate(walking_distance = seat_row_number*3)%>%
+#   mutate(walking_time_min = walking_distance/walking_speed)%>%
+#   mutate(order =sample(x=1:195,replace = FALSE))%>%
+#   mutate(time_before_enter = order*0.08+2)%>%
+#   arrange(order)%>%
+#   mutate(sit_duration =0.03*trouble_some+0.17+0.03*seat_spot)%>%
+#   filter(order == n)
+#   
+#   p <- passenger_identity1%>%
+#   mutate(walking_distance = seat_row_number*3)%>%
+#   mutate(walking_time_min = walking_distance/walking_speed)%>%
+#   mutate(order =sample(x=1:195,replace = FALSE))%>%
+#   mutate(time_before_enter = order*0.08+2)%>%
+#   arrange(order)%>%
+#   mutate(sit_duration =0.03*trouble_some+0.17+0.03*seat_spot)%>%
+#   filter(order == n-1)
+#   set.seed(1)
+#   a <- function(x){  
+#   ifelse((m$walking_speed*x > p$walking_speed*x), 
+#                            # ifelse( x < 4/(m$walking_speed-p$walking_speed),m$walking_speed*x-4*n,  
+#                           ifelse((4/(m$walking_speed-p$walking_speed)<x & x<p$walking_time_min),p$walking_speed*x-4, #2
+#                                                                                                          
+#                           ifelse((p$walking_time_min<x & x<(p$sit_duration+p$walking_time_min)),p$walking_distance-4, #3
+#                 
+#                 ifelse(((p$sit_duration+p$walking_time_min)<x & x<(p$walking_time_min+p$sit_duration+(m$walking_distance-p$walking_distance)/m$walking_speed)),(m$walking_speed*x-4*(m$walking_speed)*p$sit_duration/4-4*n),
+#                        ifelse(x>(p$walking_time_min+p$sit_duration+(m$walking_distance-p$walking_distance)/m$walking_speed),m$walking_distance,NaN)))),
+#     
+#     ifelse(( x < m$walking_time_min),m$walking_speed*x-4*n,
+#          ifelse((m$walking_time_min<x & x<m$sit_duration+m$walking_time_min),m$walking_distance-4*n,NaN))) }
+#   
+# plot(a, xlim = c(0,0.4), ylim = c(0,100))
+#   par(new=TRUE)
+#   
+# }
+#          
+#          
+ 
+
+```
+
+
+```{r}
+# #Simulation-Trial1-fixing
+# 
+# set.seed(1)
+#   m <- passenger_identity1%>%
+#   mutate(walking_distance = seat_row_number*3)%>%
+#   mutate(walking_time_min = walking_distance/walking_speed)%>%
+#   mutate(order =sample(x=1:195,replace = FALSE))%>%
+#   mutate(time_before_enter = order*0.08+2)%>%
+#   arrange(order)%>%
+#   mutate(sit_duration =2*trouble_some+10+2*seat_spot)
+#   
+# set.seed(10)
+#   
+# m %>%
+#   expand(m,time = seq(0,1,0.01))%>%
+#   arrange(order)%>%
+#   mutate(position_null = ifelse(( time < walking_time_min),walking_speed*time-4*order,0))%>%
+#   
+#   mutate(position_2 = ifelse((walking_time_min<=time & time<=sit_duration+ walking_time_min),walking_distance-4*order,0))%>%
+#   
+#   mutate(position_check = ifelse(position_null == 0, position_2, position_null))%>%
+#   
+#   arrange(time)%>%
+#   
+#   mutate(position_diff = c(0,diff(position_check)))%>%
+#   
+#   mutate(position_diff = ifelse(position_diff > 20, 0, position_diff))%>%
+#   
+#   
+#     filter(position_check >=0)%>%
+#   
+#   mutate(location_model1 = ifelse(position_diff>4, position_check+position_diff-4, position_check))%>%
+#   
+#   
+#   filter(order == 1 | order == 2 |order == 3)
+# %>%
+#   
+# 
+#   
+#   mutate(order = as.character(order))%>%
+#   
+#   
+#   ggplot(aes(x=time, y=location_model1))+
+#   geom_line(aes(colour = order))
+# 
+#   
+#   
+#   
+#   a <- function(x){ 
+#   ifelse(( x < m$walking_time_min),m$walking_speed*x-4*n,
+#          ifelse((m$walking_time_min<x & x<m$sit_duration-m$walking_time_min),m$seat_row_number*3-4*n, 
+#                 NA)) 
+#   
+#   } 
+#   # plot(a,xlim=c(0,4), ylim = c(0, 90), col = "red") 
+#   # par(new=TRUE)
+#   plot(a)
+# }
+```
+
+```{r}
+# m %>%
+#   expand(m,time = seq(0,5,0.1))%>%
+#   arrange(order)%>%
+#   mutate(position_null = ifelse(( time < walking_time_min),walking_speed*time-4*order,0))%>%
+#   
+#   mutate(position_2 = ifelse((walking_time_min<time & time<sit_duration+ walking_time_min),walking_distance-4*order,0))%>%
+#   
+#   mutate(position_final = ifelse(position_null == 0, position_2, position_null))%>%
+#   
+#   summarise(order,time,position_final)
+```
+
+
+
+
+
+```{r}
+set.seed(1)
+  m <- passenger_identity1%>%
+  mutate(walking_distance = seat_row_number*3)%>%
+  mutate(walking_time_min = walking_distance/walking_speed)%>%
+  mutate(order =sample(x=1:195,replace = FALSE))%>%
+  mutate(time_before_enter = order*0.08+2)%>%
+  arrange(order)%>%
+  mutate(sit_duration =0.3*trouble_some+0.50+2*seat_spot)
+  
+set.seed(10)
+  
+m %>%
+  expand(m,time = seq(0,1,0.0001))%>%
+  filter(order == 1:5)%>%
+  
+  arrange(order)%>%
+  mutate(position_null = ifelse(( time <= walking_time_min+order*4/walking_speed),walking_speed*time-4*order,0))%>%
+  
+  mutate(position_2 = ifelse(((walking_time_min+order*4/walking_speed)< time & time<=(sit_duration+ walking_time_min+order*4/walking_speed)),walking_distance,0))%>%
+  
+  mutate(position_check = ifelse(position_null == 0, position_2, position_null))%>%
+  
+  mutate(position_check2 = ifelse(time>(sit_duration+ walking_time_min+order*4/walking_speed), NA, position_check))%>%
+  
+  mutate(position_diff = c(0, diff(position_check))) %>%
+  
+  
+  mutate(order = as.character(order))%>%
+  ggplot(aes(x=time, y=position_check2))+
+  geom_line(aes(colour = order), na.rm = TRUE)+
+  coord_cartesian(ylim = c(0,100))+
+  labs(title = "Model Overview of Airplane Boarding/Disembarking Procedure", 
+      subtitle = "Our model looks at the relationship between passenger distance from entrance and time",
+      x = "Time",
+      y = "Distance from Airplane Entrance")
+```
+
+
+```{r}
+set.seed(1)
+  m <- passenger_identity1%>%
+  mutate(walking_distance = seat_row_number*3)%>%
+  mutate(walking_time_min = walking_distance/walking_speed)%>%
+  mutate(order =sample(x=1:195,replace = FALSE))%>%
+  mutate(time_before_enter = order*0.08+2)%>%
+  arrange(order)%>%
+  mutate(sit_duration =0.1*trouble_some+0.2+0.03*seat_spot)
+  
+  new<-m%>%
+  mutate(walking_distance_diff = c(0,diff(walking_distance)))%>%
+  mutate(sit_duration_diff = c(0,diff(sit_duration))) %>%
+  mutate(sit_duration_new = ifelse(walking_distance_diff>=0, sit_duration+sit_duration-sit_duration_diff, sit_duration))%>%
+  mutate(speed_diff = c(0,diff(walking_speed))) %>%
+  mutate(walking_speed_model = ifelse(speed_diff >= 0, walking_speed-speed_diff, walking_speed))
+  
+  
+  
+  time_final1<- new%>%
+    expand(new,time = seq(0,2,0.001))%>%
+             mutate(position1_3 = ifelse(time<=(walking_distance-walking_distance_diff)/(walking_speed_model)+
+                                           (walking_distance_diff)/walking_speed, walking_speed*time-4*order,0))%>%
+    
+    
+    mutate(position2_4 = ifelse((walking_distance-walking_distance_diff)/(walking_speed)+
+                                           (walking_distance_diff)/walking_speed<time & time> sit_duration+sit_duration-sit_duration_diff, walking_distance,0))%>%
+    
+    
+    mutate(positioncheck = ifelse(position1_3 == 0, position2_4, position1_3))%>%
+    mutate(positioncheckfin = ifelse(time>walking_distance_diff/walking_speed + sit_duration - sit_duration_diff+ (walking_distance-walking_distance_diff)/(walking_speed_model)+sit_duration, NA, positioncheck))
+  
+  time_final1%>%
+  mutate(order = as.character(order))%>%
+  ggplot(aes(x=time, y=positioncheckfin))+
+  geom_line(aes(colour = order), na.rm = TRUE)+
+  coord_cartesian(ylim = c(0,100))+
+  theme(legend.position="none")
+  
+
+time_final <- new%>%
+  expand(new,time = seq(0,2,0.001))%>%
+  
+  mutate(position_null = ifelse(( time <= (walking_distance-walking_distance_diff)/(walking_speed_model)),walking_speed_model*time-4*order,0))%>%
+  
+  mutate(position_2 = ifelse(((walking_distance-walking_distance_diff)/(walking_speed_model)< time & time<=(sit_duration - sit_duration_diff+ (walking_distance-walking_distance_diff)/(walking_speed_model))),walking_distance-walking_distance_diff-4*order,0))%>%
+  
+  mutate(position_3 = ifelse(((sit_duration - sit_duration_diff+ (walking_distance-walking_distance_diff)/(walking_speed_model))<time & time<= (walking_distance_diff+4)/walking_speed + sit_duration - sit_duration_diff+ (walking_distance-walking_distance_diff)/(walking_speed_model)),walking_speed*(time-(sit_duration - sit_duration_diff+ (walking_distance-walking_distance_diff)/(walking_speed_model)))+(walking_distance-walking_distance_diff)-4*order,0)) %>%
+  
+  mutate(position_4 = ifelse(walking_distance_diff/walking_speed + sit_duration - sit_duration_diff+ (walking_distance-walking_distance_diff)/(walking_speed_model)<time & time<= walking_distance_diff/walking_speed + sit_duration - sit_duration_diff+ (walking_distance-walking_distance_diff)/(walking_speed_model)+sit_duration, walking_distance,0))%>%
+  
+  mutate(position_check1 = ifelse(position_null == 0, position_2, position_null))%>%
+  mutate(position_check2 = ifelse(position_3 == 0, position_check1, position_3))%>%
+  mutate(position_check3 = ifelse(position_4 == 0, position_check2, position_4))%>%
+  mutate(position_checkfin = ifelse(time>walking_distance_diff/walking_speed + sit_duration - sit_duration_diff+ (walking_distance-walking_distance_diff)/(walking_speed_model)+sit_duration, NA, position_check3))%>%
+
+filter(order == 1:2)
+
+
+
+
+time_final%>%
+  mutate(order = as.character(order))%>%
+  ggplot(aes(x=time, y=position_check3))+
+  geom_line(aes(colour = order), na.rm = TRUE)+
+  coord_cartesian(ylim = c(0,100))+
+  theme(legend.position="none")
+
+
+
+
+```
+
+
+
+
