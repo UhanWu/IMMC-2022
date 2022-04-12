@@ -38,9 +38,9 @@ time_gate_seats_tot2 <- tibble(walking_speed = sample(x= c(2.17, 2.3, 2.1), size
 
 
 
-time_gate_random_tot2 <- tibble(walking_speed = sample(x= c(2.17, 2.3, 2.1), size = 192, prob = c(0.35, 0.40, 0.25), replace = TRUE),
-       priority = sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE),
-       trouble_some = sample(x = c(0,1,2,3,4), size = 192, prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE))%>%
+time_gate_random_tot2 <- tibble(walking_speed = sample(x= c(2.17, 2.3, 2.1), size = 318, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+       priority = sample(x = c(0,1), size = 318, prob = c(0.95,0.5), replace = TRUE),
+       trouble_some = sample(x = c(0,1,2,3,4), size = 318, prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE))%>%
   mutate(queue_check = ifelse(priority == 1,
                                0, 
                                1)) %>%
