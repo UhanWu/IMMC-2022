@@ -12,6 +12,45 @@ knitr::opts_chunk$set(echo = TRUE)
 ## R Markdown
 
 ```{r}
+time_gate_seats_tot <- tibble(walking_speed = sample(x= c(130, 138, 126), size = 192, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+       priority = sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE),
+       trouble_some = sample(x = c(0,1,2,3,4), size = 192, prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = ifelse(queue_check == 1,
+                                ifelse(trouble_some == 0,
+                                        sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0, 1)),
+                                   ifelse(trouble_some == 1, 
+                                       sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0.1, 0.9)),
+                                        ifelse(trouble_some == 2,
+                                               sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0.3, 0.7)),
+                                               ifelse(trouble_some == 3,
+                                                       sample(x= c(1,0),size = 192, replace = TRUE, prob =c(0.5,0.5)),
+                                                       sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0.7, 0.3))
+                                                               )))), 
+                               0))%>%
+  mutate(gate_time = queue_wrong*trouble_some+5)%>%
+  summarise(gate_tot = sum(gate_time)+50)%>%
+  pull(gate_tot)
+
+
+time_gate_seats_tot
+
+
+
+time_gate_seats_tot <- tibble(walking_speed = sample(x= c(130, 138, 126), size = 192, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+       priority = sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE),
+       trouble_some = sample(x = c(0,1,2,3,4), size = 192, prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = 0)%>%
+  mutate(gate_time = queue_wrong*trouble_some+5)%>%
+  summarise(gate_tot = sum(gate_time)+5)%>%
+  pull(gate_tot)
+
+time_gate_seats_tot
 
 ```
 

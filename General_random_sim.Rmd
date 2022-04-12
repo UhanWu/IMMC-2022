@@ -13,6 +13,46 @@ library(tidyverse)
 ```{r}
 set.seed(1)
 
+time_gate_random_tot <- tibble(walking_speed = sample(x= c(130, 138, 126), size = 192, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+       priority = sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE),
+       trouble_some = sample(x = c(0,1,2,3,4), size = 192, prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = ifelse(queue_check == 1,
+                                ifelse(trouble_some == 0,
+                                        sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0, 1)),
+                                   ifelse(trouble_some == 1, 
+                                       sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0.1, 0.9)),
+                                        ifelse(trouble_some == 2,
+                                               sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0.3, 0.7)),
+                                               ifelse(trouble_some == 3,
+                                                       sample(x= c(1,0),size = 192, replace = TRUE, prob =c(0.5,0.5)),
+                                                       sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0.7, 0.3))
+                                                               )))), 
+                               0))%>%
+  mutate(gate_time = queue_wrong*trouble_some+5)%>%
+  summarise(gate_tot = sum(gate_time)+50)%>%
+  pull(gate_tot)
+
+
+
+
+
+time_gate_seats_tot <- tibble(walking_speed = sample(x= c(130, 138, 126), size = 192, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+       priority = sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE),
+       trouble_some = sample(x = c(0,1,2,3,4), size = 192, prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = 0)%>%
+  mutate(gate_time = queue_wrong*trouble_some+5)%>%
+  summarise(gate_tot = sum(gate_time)+5)%>%
+  pull(gate_tot)
+
+
+
+
 Walking_time_tot <- tibble(row_seat = 1:33, walking_speed = sample(x= c(2.17, 2.3, 2.1), size = 33, prob = c(0.35, 0.40, 0.25),replace = TRUE), walk_time1 = 1/walking_speed, walk_time_fin = 3*sum(walk_time1))%>%
   summarise(walking_time_fin = sample(walk_time_fin, size =1))%>%
   pull(walking_time_fin)
@@ -37,10 +77,10 @@ time_TOT <- expand.grid(time_tot = sample(x = Tsd_tot, size = B, replace = TRUE)
 
 
 random_simulation <- replicate(
-  10000,
+  5000,
   {
     expand.grid(time_tot = sample(x = Tsd_tot, size = B, replace = TRUE))%>%
-  summarise(time_tot = Walking_time_tot + sum(time_tot) +T_shuffle_tot)%>%
+  summarise(time_tot = Walking_time_tot + sum(time_tot) +T_shuffle_tot+ time_gate_random_tot)%>%
   pull(time_tot)
   }
 )
@@ -50,10 +90,12 @@ as.data.frame(random_simulation)%>%
   geom_histogram(aes(y=after_stat(count)), binwidth = 1, 
                    color = "black")+
   labs(title = "Empirical Probability Distribution For Random Passenger Placement",
-         subtitle = "Data of 10000 random trials trace the shape of normal distribution",
+         subtitle = "Data of 5000 random trials trace the shape of normal distribution",
          x = "Total Time(Seconds)",
          y = "Frequency")  +
     theme_classic()
+
+
 
 ```
 
@@ -68,10 +110,10 @@ quantile(random_simulation, c(0.05,0.50, 0.95))
 ```{r}
 
 seats_simulation <- replicate(
-  10000,
+  5000,
   {
     expand.grid(time_tot = sample(x = Tsd_tot, size = B, replace = TRUE))%>%
-  summarise(time_tot = Walking_time_tot + sum(time_tot))%>%
+  summarise(time_tot = Walking_time_tot + sum(time_tot)+time_gate_random_tot)%>%
   pull(time_tot)
   }
 )
@@ -85,10 +127,20 @@ as.data.frame(seats_simulation)%>%
          y = "Frequency")  +
     theme_classic()
 
+sd(seats_simulation)
+
 ```
 
 ```{r}
 mean(quantile(seats_simulation, c(0.05, 0.95)))
 quantile(seats_simulation, c(0.05,0.50, 0.95))
+```
+
+
+
+
+
+```{r}
+
 ```
 
