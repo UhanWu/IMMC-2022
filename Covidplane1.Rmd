@@ -1,0 +1,138 @@
+---
+title: "Covid"
+author: "Yuhan Wu"
+date: "4/12/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+set.seed(1)
+
+passenger_num <- round(0.7*192)
+
+time_gate_seats_covid1<- tibble(seats = 1:192, 
+                              walking_speed = c(sample(x= c(2.17, 2.3, 2.1), size = passenger_num, prob = c(0.35, 0.40, 0.25), replace = TRUE),sample(0, size = 192-passenger_num, replace = TRUE)),
+       priority = ifelse(walking_speed == 0, 0, sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE)),
+       trouble_some = ifelse(walking_speed == 0, 0, sample(x = c(0,1,2,3,4), prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE)))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = ifelse(queue_check == 1,
+                                ifelse(trouble_some == 0,
+                                        sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0, 1)),
+                                   ifelse(trouble_some == 1, 
+                                       sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0.1, 0.9)),
+                                        ifelse(trouble_some == 2,
+                                               sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0.3, 0.7)),
+                                               ifelse(trouble_some == 3,
+                                                       sample(x= c(1,0),size = 192, replace = TRUE, prob =c(0.5,0.5)),
+                                                       sample(x= c(1,0),size = 192, replace = TRUE, prob = c(0.7, 0.3))
+                                                               )))), 
+                               0))%>%
+  mutate(gate_time = ifelse(walking_speed == 0, 0, queue_wrong*trouble_some+5))%>%
+  summarise(gate_tot = sum(gate_time)+50)%>%
+  pull(gate_tot)
+
+
+
+
+
+time_gate_random_covid1 <- tibble(seats = 1:192, walking_speed = c(sample(x= c(2.17, 2.3, 2.1), size = passenger_num, prob = c(0.35, 0.40, 0.25), replace = TRUE),sample(0, size = 192-passenger_num, replace = TRUE)),
+       priority = ifelse(walking_speed == 0, 0, sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE)),
+       trouble_some = ifelse(walking_speed == 0, 0, sample(x = c(0,1,2,3,4), prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE)))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = 0)%>%
+  mutate(gate_time = ifelse(walking_speed == 0, 0, queue_wrong*trouble_some+5))%>%
+  summarise(gate_tot = sum(gate_time)+5)%>%
+  pull(gate_tot)
+
+
+
+
+
+Tsd_tot <- tibble(seats = 1:192, 
+                              walking_speed = c(sample(x= c(2.17, 2.3, 2.1), size = passenger_num, prob = c(0.35, 0.40, 0.25), replace = TRUE),sample(0, size = 192-passenger_num, replace = TRUE)),
+       priority = ifelse(walking_speed == 0, 0, sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE)),
+       trouble_some = ifelse(walking_speed == 0, 0, sample(x = c(0,1,2,3,4), prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE)))%>%
+  mutate(SS = c(sample(c(rep(1,64),rep(2,64),rep(3,64)),size =passenger_num, replace = TRUE),sample(0,size =192-passenger_num, replace = TRUE)), Tsd = ifelse(SS == 0, 0, 2*(trouble_some+SS)+10))%>%
+  summarise(Tsd)%>%
+  pull(Tsd)
+
+
+T_shuffle_tot <- tibble(row3seats = 1:64,T_shuffle = sample(c(0,4,10,4,12,8),size = 64, prob = c(16.67,16.67,16.67,16.67,16.67,16.67),replace = TRUE))%>%
+  summarise(T_shufflefin = sum(T_shuffle))%>%
+  pull(T_shufflefin)
+
+B <- tibble(RS = sample(rep(c(1:32),6)), order = sample(1:192, size = 192), RS_O = RS+order, Bp = ceiling(1/RS_O - 1/113))%>%
+  summarise(B = sum(Bp))%>%
+  pull(B)
+
+
+
+random_simulation <- replicate(
+  5000,
+  {
+    expand.grid(time_tot = sample(x = Tsd_tot, size = B, replace = TRUE))%>%
+  summarise(time_tot = Walking_time_tot + sum(time_tot) +T_shuffle_tot+ time_gate_random_tot)%>%
+  pull(time_tot)
+  }
+)
+
+as.data.frame(random_simulation)%>%
+  ggplot(aes(x=random_simulation))+
+  geom_histogram(aes(y=after_stat(count)), binwidth = 1, 
+                   color = "black")+
+  labs(title = "Empirical Probability Distribution For Random Passenger Placement",
+         subtitle = "Data of 5000 random trials trace the shape of normal distribution",
+         x = "Total Time(Seconds)",
+         y = "Frequency")  +
+    theme_classic()
+
+
+
+```
+
+```{r}
+#quantile
+
+mean(quantile(random_simulation, c(0.05, 0.95)))
+quantile(random_simulation, c(0.05,0.50, 0.95))
+
+```
+
+```{r}
+
+seats_simulation <- replicate(
+  5000,
+  {
+    expand.grid(time_tot = sample(x = Tsd_tot, size = B, replace = TRUE))%>%
+  summarise(time_tot = Walking_time_tot + sum(time_tot)+time_gate_seats_tot)%>%
+  pull(time_tot)
+  }
+)
+
+as.data.frame(seats_simulation)%>%
+  ggplot(aes(x=seats_simulation))+
+  geom_histogram(aes(y=after_stat(count)), binwidth = 1, 
+                   color = "black")+
+  labs(title = "Empirical Probability Distribution For Boarding Based on Seats",
+         x = "Total Time(Seconds)",
+         y = "Frequency")  +
+    theme_classic()
+sd(seats_simulation)
+
+```
+
+```{r}
+mean(quantile(seats_simulation, c(0.05, 0.95)))
+quantile(seats_simulation, c(0.05,0.50, 0.95))
+```
+
+
