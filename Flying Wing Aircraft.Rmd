@@ -1,0 +1,195 @@
+---
+title: '"Flying Wing'
+author: "Yuhan Wu"
+date: "4/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+
+set.seed(10)
+
+time_gate_seats_tot2 <- tibble(walking_speed = sample(x= c(2.17, 2.3, 2.1), size = 318, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+       priority = sample(x = c(0,1), size = 318, prob = c(0.95,0.5), replace = TRUE),
+       trouble_some = sample(x = c(0,1,2,3,4), size = 318, prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = ifelse(queue_check == 1,
+                                ifelse(trouble_some == 0,
+                                        sample(x= c(1,0),size = 318, replace = TRUE, prob = c(0, 1)),
+                                   ifelse(trouble_some == 1, 
+                                       sample(x= c(1,0),size = 318, replace = TRUE, prob = c(0.1, 0.9)),
+                                        ifelse(trouble_some == 2,
+                                               sample(x= c(1,0),size = 318, replace = TRUE, prob = c(0.3, 0.7)),
+                                               ifelse(trouble_some == 3,
+                                                       sample(x= c(1,0),size = 318, replace = TRUE, prob =c(0.5,0.5)),
+                                                       sample(x= c(1,0),size = 318, replace = TRUE, prob = c(0.7, 0.3))
+                                                               )))), 
+                               0))%>%
+  mutate(gate_time = queue_wrong*trouble_some+5)%>%
+  summarise(gate_tot = sum(gate_time)+50)%>%
+  pull(gate_tot)
+
+
+
+time_gate_random_tot2 <- tibble(walking_speed = sample(x= c(2.17, 2.3, 2.1), size = 192, prob = c(0.35, 0.40, 0.25), replace = TRUE),
+       priority = sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE),
+       trouble_some = sample(x = c(0,1,2,3,4), size = 192, prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE))%>%
+  mutate(queue_check = ifelse(priority == 1,
+                               0, 
+                               1)) %>%
+  mutate(queue_wrong = 0)%>%
+  mutate(gate_time = queue_wrong*trouble_some+5)%>%
+  summarise(gate_tot = sum(gate_time)+5)%>%
+  pull(gate_tot)
+```
+
+```{r}
+B <- tibble(order = sample(1:318), 
+       Area = sample(c(rep("A",6), rep("B",6),rep("C",6),rep("D",72), rep("E",78), rep("F",78),rep("G",72))),
+       Row = ifelse(Area == "A"| Area == "B"|Area == "C", -3, sample(c(rep(-2,18),rep(-1,18),rep(1,24),rep(2,24),rep(3,24),
+                                            rep(4,24),rep(5,24),rep(6,24),rep(7,24),rep(8,24),rep(9,24),rep(10,24),rep(11,24)))))%>%
+  mutate(Column = ifelse(Area == "A", sample(c(2,3,4,5,6,7)),
+                         ifelse(Area == "B", sample(c(9,10,11,12,13,14)),
+                                ifelse(Area == "C", sample(c(16,17,18,19,20,21)),
+                                       sample(c(rep(-3,11),rep(-2,11),rep(-1,11),rep(2,13),rep(3,13),rep(4,13),
+                                                rep(5,13),rep(6,13),rep(7,13),rep(9,13),rep(10,13),rep(11,13),
+                                                rep(12,13),rep(13,13),rep(14,13),rep(16,13),rep(17,13),rep(18,13),
+                                                rep(19,13),rep(20,13),rep(21,13),rep(23,11),rep(24,11),rep(25,11)))))))%>%
+  mutate(P_influence = ifelse(Area == "A", 240,
+                              ifelse(Area == "B",156,
+                                     ifelse(Area == "C",72,
+                                            ifelse(Area == "D"|Area == "G", 72,
+                                                   78)))))%>%
+  mutate(entrance_dist = sqrt(Row*Row*9 + Column*Column*9))%>%
+  mutate(Factor_combine = P_influence+1/entrance_dist)%>%
+  mutate(Sit_duration_consid = ceiling((Factor_combine - mean(Factor_combine))/262+1/order-1/159))%>%
+  summarise(B = sum(Sit_duration_consid))%>%
+  pull(B)
+  
+TSD <- tibble(Passengers = 1:318, 
+       Area = sample(c(rep("A",6), rep("B",6),rep("C",6),rep("D",72), rep("E",78), rep("F",78),rep("G",72))),
+       Row = ifelse(Area == "A"| Area == "B"|Area == "C", -3, sample(c(rep(-2,18),rep(-1,18),rep(1,24),rep(2,24),rep(3,24),
+                                            rep(4,24),rep(5,24),rep(6,24),rep(7,24),rep(8,24),rep(9,24),rep(10,24),rep(11,24)))))%>%
+  mutate(Column = ifelse(Area == "A", sample(c(2,3,4,5,6,7)),
+                         ifelse(Area == "B", sample(c(9,10,11,12,13,14)),
+                                ifelse(Area == "C", sample(c(16,17,18,19,20,21)),
+                                       sample(c(rep(-3,11),rep(-2,11),rep(-1,11),rep(2,13),rep(3,13),rep(4,13),
+                                                rep(5,13),rep(6,13),rep(7,13),rep(9,13),rep(10,13),rep(11,13),
+                                                rep(12,13),rep(13,13),rep(14,13),rep(16,13),rep(17,13),rep(18,13),
+                                                rep(19,13),rep(20,13),rep(21,13),rep(23,11),rep(24,11),rep(25,11)))))))%>%
+  mutate(P_influence = ifelse(Area == "A", 240,
+                              ifelse(Area == "B",156,
+                                     ifelse(Area == "C",72,
+                                            ifelse(Area == "D"|Area == "G", 72,
+                                                   78)))))%>%
+  mutate(entrance_dist = sqrt(Row*Row*9 + Column*Column*9))%>%
+  mutate(Factor_combine = P_influence+entrance_dist)%>%
+  mutate(Sit_duration_consid = ceiling((Factor_combine - mean(Factor_combine))/262))%>%
+  mutate(TS = sample(c(0:4), prob = c(0.55, 0.75, 0.45, 0.35, 0.10),size = 318, replace = TRUE), SS = sample(c(rep(1,122),rep(2,98),rep(3,98))), Tsd = 2*(TS+SS)+10)%>%
+  pull(Tsd)
+
+
+T_shuffle_tot2 <- tibble(row3seats = 1:106,T_shuffle = sample(c(0,4,10,4,12,8),size = 106, prob = c(16.67,16.67,16.67,16.67,16.67,16.67),replace = TRUE))%>%
+  mutate(significant = ifelse(row3seats == 1|row3seats ==2|row3seats ==3|row3seats ==4|row3seats ==5|row3seats ==6|row3seats ==7|row3seats ==8|row3seats ==9|row3seats ==10|row3seats ==11|row3seats ==12|row3seats ==13|row3seats ==14|row3seats ==15|row3seats ==16|row3seats ==17|row3seats ==18|row3seats ==19|row3seats ==20|row3seats ==21|row3seats ==22,
+                              sample(c(0,1),size = 22, prob= c(0.9,0.1), replace = TRUE),
+                              ifelse(row3seats == 23|row3seats ==24|row3seats ==25|row3seats ==26|row3seats ==27|row3seats ==28|row3seats ==29|row3seats ==30|row3seats ==31|row3seats ==32|row3seats ==33|row3seats ==34|row3seats ==35|row3seats ==36|row3seats ==37|row3seats ==38|row3seats ==39|row3seats ==40|row3seats ==41|row3seats ==42|row3seats ==43|row3seats ==44,
+                              sample(c(0,1),size =22 , prob = c(0.7,0.3), replace = TRUE),
+                              ifelse(row3seats  ==45|row3seats ==46|row3seats ==47|row3seats ==48|row3seats ==49|row3seats ==50|row3seats ==51|row3seats ==52|row3seats ==53|row3seats ==54|row3seats ==55|row3seats ==56|row3seats ==57|row3seats ==58|row3seats ==59|row3seats ==60|row3seats ==61|row3seats ==62|row3seats ==63|row3seats ==64|row3seats ==65|row3seats ==66,
+                              sample(c(0,1),size = 22, prob = c(0.5,0.5), replace = TRUE),
+                              ifelse(row3seats == 67|row3seats ==68|row3seats ==69|row3seats ==70|row3seats ==71|row3seats ==72|row3seats ==73|row3seats ==74|row3seats ==75|row3seats ==76|row3seats ==77|row3seats ==78|row3seats ==79|row3seats ==80|row3seats ==81|row3seats ==82|row3seats ==83|row3seats ==84|row3seats ==85|row3seats ==86|row3seats ==87|row3seats ==88,
+                              sample(c(0,1),size = 22, prob = c(0.3,0.7), replace = TRUE),
+                              ifelse(row3seats == 89|row3seats ==90|row3seats ==91|row3seats ==92|row3seats ==93|row3seats ==94|row3seats ==95|row3seats ==96|row3seats ==97|row3seats ==98|row3seats ==99|row3seats ==100|row3seats ==101|row3seats ==102|row3seats ==103|row3seats ==104|row3seats ==105|row3seats ==106,
+                              sample(c(0,1),size = 18, prob = c(0.1,0.9), replace = TRUE),NA))))))%>%
+  summarise(T_shufflefin = sum(T_shuffle*significant))%>%
+  pull(T_shufflefin)
+
+
+Walking_time_tot2 <- tibble(Passengers = 1:318, 
+       Area = sample(c(rep("A",6), rep("B",6),rep("C",6),rep("D",72), rep("E",78), rep("F",78),rep("G",72))),
+       Row = ifelse(Area == "A"| Area == "B"|Area == "C", -3, sample(c(rep(-2,18),rep(-1,18),rep(1,24),rep(2,24),rep(3,24),
+                                            rep(4,24),rep(5,24),rep(6,24),rep(7,24),rep(8,24),rep(9,24),rep(10,24),rep(11,24)))))%>%
+  mutate(Column = ifelse(Area == "A", sample(c(2,3,4,5,6,7)),
+                         ifelse(Area == "B", sample(c(9,10,11,12,13,14)),
+                                ifelse(Area == "C", sample(c(16,17,18,19,20,21)),
+                                       sample(c(rep(-3,11),rep(-2,11),rep(-1,11),rep(2,13),rep(3,13),rep(4,13),
+                                                rep(5,13),rep(6,13),rep(7,13),rep(9,13),rep(10,13),rep(11,13),
+                                                rep(12,13),rep(13,13),rep(14,13),rep(16,13),rep(17,13),rep(18,13),
+                                                rep(19,13),rep(20,13),rep(21,13),rep(23,11),rep(24,11),rep(25,11)))))))%>%
+  mutate(P_influence = ifelse(Area == "A", 240,
+                              ifelse(Area == "B",156,
+                                     ifelse(Area == "C",72,
+                                            ifelse(Area == "D"|Area == "G", 72,
+                                                   78)))))%>%
+  mutate(entrance_dist2 = abs(Row) + abs(Column))%>%
+  mutate(walking_speed = sample(x= c(2.17, 2.3, 2.1), size = 318, prob = c(0.35, 0.40, 0.25),replace = TRUE), walk_time1 = (entrance_dist2/walking_speed)/3, walk_time_fin = sum(walk_time1))%>%
+  summarise(walking_time_fin = sample(walk_time_fin, size =1))%>%
+  pull(walking_time_fin)
+
+
+
+```
+
+
+```{r}
+random_simulation2 <- replicate(
+  5000,
+  {
+    expand.grid(time_tot = sample(x = TSD, size = B, replace = TRUE))%>%
+  summarise(time_tot = Walking_time_tot2 + sum(time_tot) +T_shuffle_tot2+ time_gate_random_tot2)%>%
+  pull(time_tot)
+  }
+)
+
+as.data.frame(random_simulation2)%>%
+  ggplot(aes(x=random_simulation2))+
+  geom_histogram(aes(y=after_stat(count)), binwidth = 1, 
+                   color = "black")+
+  labs(title = "Empirical Probability Distribution For Random Passenger Placement",
+         subtitle = "Total Time For Flying Wing Aircraft",
+         x = "Total Time(Seconds)",
+         y = "Frequency")  +
+    theme_classic()
+
+```
+
+```{r}
+mean(quantile(random_simulation2, c(0.05, 0.95)))
+quantile(random_simulation2, c(0.05,0.50, 0.95))
+```
+
+```{r}
+seats_simulation2 <- replicate(
+  5000,
+  {
+    expand.grid(time_tot = sample(x = TSD, size = B, replace = TRUE))%>%
+  summarise(time_tot = Walking_time_tot2 + sum(time_tot)+time_gate_seats_tot2)%>%
+  pull(time_tot)
+  }
+)
+
+as.data.frame(seats_simulation2)%>%
+  ggplot(aes(x=seats_simulation2))+
+  geom_histogram(aes(y=after_stat(count)), binwidth = 1, 
+                   color = "black")+
+  labs(title = "Empirical Probability Distribution For Boarding Based on Seats",
+       subtitle = "Total Time For Flying Wing Aircraft",
+         x = "Total Time(Seconds)",
+         y = "Frequency")  +
+    theme_classic()
+
+sd(seats_simulation2)
+
+```
+
+```{r}
+mean(quantile(seats_simulation2, c(0.05, 0.95)))
+quantile(seats_simulation2, c(0.05,0.50, 0.95))
+```
+
