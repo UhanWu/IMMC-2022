@@ -39,9 +39,6 @@ time_gate_seats_covid1<- tibble(seats = 1:192,
   pull(gate_tot)
 
 
-
-
-
 time_gate_random_covid1 <- tibble(seats = 1:192, walking_speed = c(sample(x= c(2.17, 2.3, 2.1), size = passenger_num, prob = c(0.35, 0.40, 0.25), replace = TRUE),sample(0, size = 192-passenger_num, replace = TRUE)),
        priority = ifelse(walking_speed == 0, 0, sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE)),
        trouble_some = ifelse(walking_speed == 0, 0, sample(x = c(0,1,2,3,4), prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE)))%>%
@@ -56,14 +53,6 @@ time_gate_random_covid1 <- tibble(seats = 1:192, walking_speed = c(sample(x= c(2
 
 
 
-
-Tsd_tot <- tibble(seats = 1:192, 
-                              walking_speed = c(sample(x= c(2.17, 2.3, 2.1), size = passenger_num, prob = c(0.35, 0.40, 0.25), replace = TRUE),sample(0, size = 192-passenger_num, replace = TRUE)),
-       priority = ifelse(walking_speed == 0, 0, sample(x = c(0,1), size = 192, prob = c(0.95,0.5), replace = TRUE)),
-       trouble_some = ifelse(walking_speed == 0, 0, sample(x = c(0,1,2,3,4), prob = c(0.70, 0.15, 0.08, 0.05, 0.02), replace = TRUE)))%>%
-  mutate(SS = c(sample(c(rep(1,64),rep(2,64),rep(3,64)),size =passenger_num, replace = TRUE),sample(0,size =192-passenger_num, replace = TRUE)), Tsd = ifelse(SS == 0, 0, 2*(trouble_some+SS)+10))%>%
-  summarise(Tsd)%>%
-  pull(Tsd)
 
 
 T_shuffle_tot <- tibble(row3seats = 1:64,T_shuffle = sample(c(0,4,10,4,12,8),size = 64, prob = c(16.67,16.67,16.67,16.67,16.67,16.67),replace = TRUE))%>%
